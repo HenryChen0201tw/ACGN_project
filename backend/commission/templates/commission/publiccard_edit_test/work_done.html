@@ -1,0 +1,221 @@
+{# {% extends '[BASE]ALL.html' %} #}
+{% load static %}
+{% load publiccard_work_filters %} {# 加入手工新增的外部篩選器確保迴圈無資料可判定無資料而顯示空白 #}
+
+{% block app_css %}
+
+{% endblock %}
+
+{% block app_content %}
+<li>
+    <div class="d-flex justify-content-between align-items-center">
+      <label
+        class="form-check-label form-label me-2"
+        for="switch-work-done"
+        >已成交作品<span
+          class="ms-2"
+          data-bs-container="body"
+          data-bs-toggle="popover"
+          data-bs-trigger="hover focus"
+          data-bs-placement="top"
+          data-bs-content="公開狀態僅控制是否顯示在名片上，不影響是否公開於大廳"
+          ><svg
+            width="1em"
+            height="1em"
+            viewBox="0 0 16 16"
+            class="bi bi-info-circle"
+            fill="currentColor"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"
+            />
+            <path
+              d="M8.93 6.588l-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588z"
+            />
+            <circle cx="8" cy="4.5" r="1" /></svg></span
+      ></label>
+      <div class="form-check form-switch">
+        <input
+          class="form-check-input"
+          type="checkbox"
+          id="switch-work-done"
+          name="ViewKey_bd_public_card_info_switch-work-done"
+          checked
+        />
+      </div>
+    </div>
+    <div class="private-message" style="display: none;">
+      <div class="text-muted text-center py-3">使用者未開放資訊</div>
+    </div>
+    <div class="expandable-content" id="content-work-done">
+      <div class="public-content">
+        <!-- 篩選器容器 (在原始資料存在時顯示) -->
+        {% if ViewKey_DbWorkInfo %}
+        <div class="mb-3 filter-container" data-template="work_done">
+          <div class="input-group">
+            <span class="input-group-text">
+              <!-- 空白漏斗圖示(顯示) -->
+              <svg class="filter-icon-empty" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#6c757d" class="bi bi-funnel" viewBox="0 0 16 16">
+                <path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5zm1 .5v1.308l4.372 4.858A.5.5 0 0 1 7 8.5v5.306l2-.666V8.5a.5.5 0 0 1 .128-.334L13.5 3.308V2z"></path>
+              </svg>
+              <!-- 填滿漏斗圖示(隱藏，並透過JAVAScript控制顯示) -->
+              <svg class="filter-icon-filled" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#6c757d" class="bi bi-funnel-fill" viewBox="0 0 16 16" style="display: none;">
+                <path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5z"/>
+              </svg>
+            </span>
+            <input type="text" 
+                   class="form-control filter-input" 
+                   data-template="work_done"
+                   placeholder="輸入關鍵字以篩選關聯項目..."
+                   data-table="work"
+                   data-id-field="work_id"
+                   data-search-fields="work_id,work_title,work_category,work_original_from,work_description,work_price,work_status"
+                   data-user-id="{{ ViewKey_DbPublicCardInfo.member_basic_id }}">
+            <button class="btn app-btn-secondary clear-filter-btn" type="button">
+              清除
+            </button>
+          </div>
+        </div>
+        {% endif %}
+        <div class="d-flex flex-row flex-wrap gap-3">
+          {% with html_filter_work_done=ViewKey_DbWorkInfo|filter_work_status:"已成交" %}
+            {% if html_filter_work_done %}
+              {% for HTML_work in html_filter_work_done %}
+              <div class="commission-card" data-template="work_done">
+            <!-- 加入隱藏的偵錯資訊 -->
+            <div style="display: none;" 
+                 data-debug="true"
+                       data-work-id="{{ HTML_work.work_id }}"
+                       data-public-status="{{ HTML_work.public_status|lower }}">
+            </div>
+            
+            <div
+                    class="commission-card-container {% if not HTML_work.public_status %}private{% endif %}"
+            >
+              <div class="commission-card-overlay"></div>
+              <!-- 上層DIV -->
+              <div class="commission-card-header 
+                        {% if HTML_work.work_status == '公開販售' %}status-recruiting
+                        {% elif HTML_work.work_status == '投稿審查' %}status-closed
+                        {% elif HTML_work.work_status == '已成交' %}status-completed
+                        {% elif HTML_work.work_status == '取消販售' %}status-cancelled{% endif %}">
+                <div style="display: flex; flex-direction: column;">
+                  <h5 class="commission-card-title">
+                          <a href="{% url 'commission:Urls_work_edit' view_fn_work_id=HTML_work.work_id %}" 
+                        class="text-dark text-decoration-underline">
+                            {{ HTML_work.work_title }}
+                    </a>
+                  </h5>
+                        {% if HTML_work.work_original_from %}
+                  <p class="commission-card-text small text-muted" style="margin-bottom: 0; font-size: 0.75em; margin: 2px  0 0 6px;">
+                          原作：{{ HTML_work.work_original_from }}
+                  </p>
+                  {% endif %}
+                </div>
+                <span
+                      class="badge {% if HTML_work.work_status == '公開販售' %}bg-success {% elif HTML_work.work_status == '投稿審查' %}bg-danger {% elif HTML_work.work_status == '已成交' %}bg-info {% elif HTML_work.work_status == '取消販售' %}bg-secondary {% endif %}"
+              >
+                      {{HTML_work.work_status}}
+              </span>
+              </div>
+              <!-- 下層DIV -->
+              <!-- 依徵件狀態決定顯色 -->
+              <div class="commission-card-body
+                        {% if HTML_work.work_status == '公開販售' %}status-recruiting
+                        {% elif HTML_work.work_status == '投稿審查' %}status-closed
+                        {% elif HTML_work.work_status == '已成交' %}status-completed
+                        {% elif HTML_work.work_status == '取消販售' %}status-cancelled{% endif %}">
+                      {% with first_work_image=HTML_work.dbworkimages_set.all|first %} 
+                      {% if first_work_image %}
+                      <!-- 作品說明  -->
+                <div class="commission-card-description" style="flex: 0 1 auto; display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+                  <p class="commission-card-text">
+                          {{ HTML_work.work_description|truncatechars:16 }}
+                  </p>
+                  <!-- 更新時間 -->
+                  <p class="commission-card-text small text-muted" style="margin-bottom: 0; text-align: right; font-size: 0.75em;">
+                          {{ HTML_work.last_update|date:"Y.m.d" }}
+                  </p>
+                </div>
+                      <!-- 作品預覽圖 -->
+                <div class="commission-card-preview">
+                  <img
+                          src="{{ MEDIA_URL }}commission/workID_img/{{ first_work_image.image_url }}"
+                          alt="作品預覽圖"
+                    style="object-fit: contain; width: 100%; height: 100%;"
+                  />
+                </div>
+                {% else %}
+                      <!-- 作品說明 -->
+                <div class="commission-card-description" style="flex: 1; display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+                  <p class="commission-card-text">
+                          {{ HTML_work.work_description|truncatechars:30 }}
+                  </p>
+                  <!-- 更新時間 -->
+                  <p class="commission-card-text small text-muted" style="margin-bottom: 0; text-align: right; font-size: 0.75em;">
+                          {{ HTML_work.last_update|date:"Y.m.d" }}
+                  </p>
+                </div>
+                {% endif %} 
+                {% endwith %}
+              </div>
+            </div>
+            <!-- 公開狀態切換 -->
+            <div class="commission-card-status">
+              <div class="form-check" onclick="handleVisibilityChange(this, {{ HTML_work.work_id }}, 'public')" style="cursor: pointer;">
+                <label
+                  class="form-check-label badge bg-success"
+                        for="status{{ HTML_work.work_id }}_public"
+                >
+                  公開
+                </label>
+                <input
+                  class="form-check-input commission-radio mx-2"
+                  type="radio"
+                        name="workStatus{{ HTML_work.work_id }}"
+                        id="status{{ HTML_work.work_id }}_public"
+                        value="public"
+                        {% if HTML_work.public_status %}checked{% endif %}
+                />
+              </div>
+              <div class="form-check" onclick="handleVisibilityChange(this, {{ HTML_work.work_id }}, 'private')" style="cursor: pointer;">
+                <label
+                  class="form-check-label badge bg-secondary"
+                        for="status{{ HTML_work.work_id }}_private"
+                >
+                  非公開
+                </label>
+                <input
+                  class="form-check-input commission-radio mx-2"
+                  type="radio"
+                        name="workStatus{{ HTML_work.work_id }}"
+                        id="status{{ HTML_work.work_id }}_private"
+                        value="private"
+                        {% if not HTML_work.public_status %}checked{% endif %}
+                />
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+          {% else %}
+              <div class="text-muted">尚未有已成交作品</div>
+          {% endif %}
+          {% endwith %}
+          <!-- 新增篩選無結果提示 -->
+          <div class="no-results text-muted" data-template="work_done" style="display: none; width: 100%; text-align: center;">
+            查無符合「<span class="search-term"></span>」的項目...
+          </div>
+        </div>
+        <!-- 結束水平排列的 div -->
+      </div>
+    </div>
+  </li>
+
+{% endblock %}
+
+
+{% block app_script %}
+
+{% endblock %}
